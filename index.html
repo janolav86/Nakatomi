@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nakatomi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+
+    .logo span {
+      color: #e63946;
+    }
+
+    .tagline {
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 4rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.2rem;
+      width: 100%;
+      max-width: 700px;
+      padding: 0 1.5rem;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 1.8rem 1.5rem;
+      text-decoration: none;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.6rem;
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      border-color: #e63946;
+      background: #1a1010;
+      transform: translateY(-3px);
+    }
+
+    .card-icon {
+      font-size: 1.8rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .card-desc {
+      font-size: 0.78rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .footer {
+      margin-top: 4rem;
+      font-size: 0.72rem;
+      color: #333;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: #e63946;
+      margin-bottom: 4rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo">Nakat<span>o</span>mi</div>
+  <div class="tagline">Verktøy som faktisk funker</div>
+  <div class="divider"></div>
+
+  <div class="grid">
+    <a class="card" href="eurobonus.html">
+      <div class="card-icon"><div class="card-icon" style="font-size:1rem; font-weight:800; letter-spacing:0.1em; color:#4a90d9;">SAS</div></div>
+      <div class="card-title">EuroBonus</div>
+      <div class="card-desc">Søk etter bonusreiser hos SAS uten innlogging</div>
+    </a>
+
+    <a class="card" href="/strava">
+      <div class="card-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/c/cb/Strava_Logo.svg" height="24"></div>
+      <div class="card-title">Strava</div>
+      <div class="card-desc">Oversikt over turer, høydemeter og statistikk</div>
+    </a>
+
+    <a class="card" href="/kalkulator">
+      <div class="card-icon">🧮</div>
+      <div class="card-title">Kalkulatorer</div>
+      <div class="card-desc">Nyttige kalkulatorer for hverdagen</div>
+    </a>
+  </div>
+
+  <div class="footer">nakatomi.no</div>
+
+</body>
+</html>

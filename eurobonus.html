@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EuroBonus Søk — Nakatomi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .back {
+      color: #555;
+      text-decoration: none;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .back:hover { color: #e63946; }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+    h1 span { color: #e63946; }
+
+    /* SØKESKJEMA */
+    .search-box {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 14px;
+      padding: 2rem;
+      max-width: 680px;
+      margin: 0 auto 3rem;
+    }
+
+    .search-box h2 {
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.8rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .swap-btn {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      color: #fff;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+    }
+    .swap-btn:hover { border-color: #e63946; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    input, select {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: #e63946; }
+    input::placeholder { color: #444; }
+
+    .date-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .search-btn {
+      width: 100%;
+      background: #e63946;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.9rem;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .search-btn:hover { background: #c1121f; transform: translateY(-1px); }
+
+    .note {
+      font-size: 0.72rem;
+      color: #444;
+      text-align: center;
+      margin-top: 0.8rem;
+    }
+    .note a { color: #555; }
+
+    /* BONUSTABELL */
+    .section-title {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .zones {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .zone-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 1.3rem 1.5rem;
+    }
+
+    .zone-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #e63946;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    .zone-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid #1e1e1e;
+      font-size: 0.85rem;
+    }
+    .zone-row:last-child { border-bottom: none; }
+
+    .zone-row .dest { color: #ccc; }
+    .zone-row .pts { color: #fff; font-weight: 600; font-size: 0.9rem; }
+    .zone-row .cls {
+      font-size: 0.7rem;
+      color: #555;
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="back" href="/">← Nakatomi</a>
+    <h1>Euro<span>Bonus</span></h1>
+  </header>
+
+  <!-- SØKESKJEMA -->
+  <div class="search-box">
+    <h2>Søk bonusreise</h2>
+
+    <div class="row">
+      <div class="field">
+        <label>Fra</label>
+        <select id="from">
+          <option value="OSL">Oslo (OSL)</option>
+          <option value="BGO">Bergen (BGO)</option>
+          <option value="TRD">Trondheim (TRD)</option>
+          <option value="SVG">Stavanger (SVG)</option>
+          <option value="ARN">Stockholm (ARN)</option>
+          <option value="CPH">København (CPH)</option>
+          <option value="HEL">Helsinki (HEL)</option>
+        </select>
+      </div>
+      <button class="swap-btn" onclick="swap()">⇄</button>
+      <div class="field">
+        <label>Til</label>
+        <select id="to">
+          <option value="CPH">København (CPH)</option>
+          <option value="ARN">Stockholm (ARN)</option>
+          <option value="HEL">Helsinki (HEL)</option>
+          <option value="LHR">London (LHR)</option>
+          <option value="LGW">London Gatwick (LGW)</option>
+          <option value="CDG">Paris (CDG)</option>
+          <option value="AMS">Amsterdam (AMS)</option>
+          <option value="FRA">Frankfurt (FRA)</option>
+          <option value="BCN">Barcelona (BCN)</option>
+          <option value="MAD">Madrid (MAD)</option>
+          <option value="FCO">Roma (FCO)</option>
+          <option value="MXP">Milano (MXP)</option>
+          <option value="DUB">Dublin (DUB)</option>
+          <option value="VIE">Wien (VIE)</option>
+          <option value="ZRH">Zürich (ZRH)</option>
+          <option value="BKK">Bangkok (BKK)</option>
+          <option value="HKG">Hong Kong (HKG)</option>
+          <option value="NRT">Tokyo (NRT)</option>
+          <option value="SIN">Singapore (SIN)</option>
+          <option value="JFK">New York (JFK)</option>
+          <option value="EWR">New York Newark (EWR)</option>
+          <option value="LAX">Los Angeles (LAX)</option>
+          <option value="ORD">Chicago (ORD)</option>
+          <option value="BOS">Boston (BOS)</option>
+          <option value="MIA">Miami (MIA)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="date-row">
+      <div class="field">
+        <label>Utreise</label>
+        <input type="date" id="depDate">
+      </div>
+      <div class="field">
+        <label>Retur (valgfritt)</label>
+        <input type="date" id="retDate">
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:1.2rem">
+      <label>Kabinklasse</label>
+      <select id="cabin">
+        <option value="M">Economy</option>
+        <option value="C">Business</option>
+      </select>
+    </div>
+
+    <button class="search-btn" onclick="search()">Søk på SAS ✈️</button>
+    <p class="note">Du sendes til <a href="https://www.flysas.com" target="_blank">flysas.com</a> med søket ferdig utfylt</p>
+  </div>
+
+  <!-- BONUSOVERSIKT -->
+  <p class="section-title">Poeng som kreves per strekning</p>
+
+  <div class="zones">
+    <div class="zone-card">
+      <h3>🇳🇴 Norden & Baltikum</h3>
+      <div class="zone-row"><span class="dest">Oslo → Stockholm</span><span class="pts">7 500<span class="cls"> / tur</span></span></div>
+      <div class="zone-row"><span class="dest">Oslo → København</span><span class="pts">7 500<span class="cls"> / tur</span></span></div>
+      <div class="zone-row"><span class="dest">Oslo → Helsinki</span><span class="pts">10 000<span class="cls"> / tur</span></span></div>
+    </div>
+
+    <div class="zone-card">
+      <h3>🌍 Europa</h3>
+      <div class="zone-row"><span class="dest">Oslo → London</span><span class="pts">22 000<span class="cls"> / tur</span></span></div>
+      <div class="zone-row"><span class="dest">Oslo → Paris</span><span class="pts">22 000<span class="cls"> / tur</span></span></div>
+      <div class="zone-row"><span class="dest">Oslo → Amsterdam</span><span class="pts">22 000<span class="cls"> / tur</span></span></div>
+    </div>
+
+    <div class="zone-card">
+      <h3>🌎 Intercontinental</h3>
+      <div class="zone-row"><span class="dest">Oslo → New York</span><span class="pts">60 000<span class="cls"> / tur</span></span></div>
+      <div class="zone-row"><span class="dest">Oslo → Bangkok</span><span class="pts">60 000<span class="cls"> / tur</span></span></div>
+      <div class="zone-row"><span class="dest">Oslo → Tokyo</span><span class="pts">65 000<span class="cls"> / tur</span></span></div>
+    </div>
+
+    <div class="zone-card">
+      <h3>💼 Business-tillegg</h3>
+      <div class="zone-row"><span class="dest">Norden</span><span class="pts">2x poeng</span></div>
+      <div class="zone-row"><span class="dest">Europa</span><span class="pts">2x poeng</span></div>
+      <div class="zone-row"><span class="dest">Intercont.</span><span class="pts">2x poeng</span></div>
+    </div>
+  </div>
+
+  <script>
+    // Sett dagens dato som default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('depDate').value = today;
+
+    function swap() {
+      const f = document.getElementById('from');
+      const t = document.getElementById('to');
+      [f.value, t.value] = [t.value, f.value];
+    }
+
+    function search() {
+      const from = document.getElementById('from').value.trim();
+      const to = document.getElementById('to').value.trim();
+      const dep = document.getElementById('depDate').value;
+      const ret = document.getElementById('retDate').value;
+      const cabin = document.getElementById('cabin').value;
+
+      // Trekk ut IATA-kode hvis bruker skriver "Oslo (OSL)"
+      const fromCode = from.value;
+      const toCode = to.value;
+
+      const depFmt = dep.replace(/-/g, '');
+      const retFmt = ret ? ret.replace(/-/g, '') : '';
+
+      let url = `https://www.sas.no/bestill/flyreiser/?bookingflow=reward&origin=${fromCode}&destination=${toCode}&outdate=${depFmt}&cabin=${cabin}&adults=1`;
+      if (retFmt) url += `&homedate=${retFmt}`;
+
+      window.open(url, '_blank');
+    }
+  </script>
+
+</body>
+</html>
