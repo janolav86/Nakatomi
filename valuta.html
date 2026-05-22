@@ -186,7 +186,7 @@
 
   async function loadRates() {
     try {
-      const res = await fetch('https://api.frankfurter.app/latest?base=NOK');
+      const res = await fetch('/api/valuta?base=NOK');
       const data = await res.json();
       rates = data.rates;
       rates['NOK'] = 1;
