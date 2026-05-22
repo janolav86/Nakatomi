@@ -269,7 +269,16 @@
     </div>
 
     <button class="search-btn" onclick="search()">Søk på SAS ✈️</button>
-    <p class="note">Du sendes til <a href="https://www.flysas.com" target="_blank">flysas.com</a> med søket ferdig utfylt</p>
+    <p class="note">Du sendes til SAS sin bonussøk-side</p>
+
+    <div id="search-info" style="display:none; margin-top:1.2rem; background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:1rem; font-size:0.85rem; color:#aaa; line-height:2;">
+      <strong style="color:#fff;">Fyll inn dette på SAS sin side:</strong><br>
+      Fra: <span style="color:#fff;" id="info-from"></span><br>
+      Til: <span style="color:#fff;" id="info-to"></span><br>
+      Utreise: <span style="color:#fff;" id="info-dep"></span><br>
+      Retur: <span style="color:#fff;" id="info-ret"></span><br>
+      Klasse: <span style="color:#fff;" id="info-cabin"></span>
+    </div>
   </div>
 
   <!-- BONUSOVERSIKT -->
@@ -292,7 +301,7 @@
 
     <div class="zone-card">
       <h3>🌎 Intercontinental</h3>
-      <div class="zone-row"><span class="dest">Oslo → New York</span><span class="pts">60 000<span class="cls"> / tur</span></span></div>
+      <div class="zone-row"><span class="dest">Oslo → New York</span><span class="pts">50 000<span class="cls"> / tur</span></span></div>
       <div class="zone-row"><span class="dest">Oslo → Bangkok</span><span class="pts">60 000<span class="cls"> / tur</span></span></div>
       <div class="zone-row"><span class="dest">Oslo → Tokyo</span><span class="pts">65 000<span class="cls"> / tur</span></span></div>
     </div>
@@ -324,8 +333,8 @@
       const cabin = document.getElementById('cabin').value;
 
       // Trekk ut IATA-kode hvis bruker skriver "Oslo (OSL)"
-      const fromCode = from;
-      const toCode = to;
+      const fromCode = from.value;
+      const toCode = to.value;
 
       const depFmt = dep.replace(/-/g, '');
       const retFmt = ret ? ret.replace(/-/g, '') : '';
