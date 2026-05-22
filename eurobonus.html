@@ -324,8 +324,8 @@
       const cabin = document.getElementById('cabin').value;
 
       // Trekk ut IATA-kode hvis bruker skriver "Oslo (OSL)"
-      const fromCode = from.value;
-      const toCode = to.value;
+      const fromCode = from;
+      const toCode = to;
 
       const depFmt = dep.replace(/-/g, '');
       const retFmt = ret ? ret.replace(/-/g, '') : '';
