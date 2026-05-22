@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valuta — Nakatomi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .back { color: #555; text-decoration: none; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+    .back:hover { color: #e63946; }
+    h1 { font-size: 1.6rem; font-weight: 800; }
+    h1 span { color: #e63946; }
+
+    .container { max-width: 680px; margin: 0 auto; }
+
+    /* KONVERTER */
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 14px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h2 { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #555; margin-bottom: 1.5rem; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.8rem;
+      align-items: flex-end;
+      margin-bottom: 1.2rem;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    label { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: #555; }
+
+    input, select {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: #e63946; }
+
+    .swap-btn {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      color: #fff;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+      margin-bottom: 0;
+    }
+    .swap-btn:hover { border-color: #e63946; }
+
+    .result-box {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .result-amount { font-size: 1.8rem; font-weight: 800; color: #fff; }
+    .result-rate { font-size: 0.78rem; color: #555; text-align: right; }
+    .result-date { font-size: 0.7rem; color: #444; margin-top: 0.2rem; }
+
+    /* MULTI */
+    .multi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+    .multi-card {
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .multi-flag { font-size: 1.2rem; margin-bottom: 0.3rem; }
+    .multi-currency { font-size: 0.7rem; color: #555; letter-spacing: 0.1em; text-transform: uppercase; }
+    .multi-amount { font-size: 1.2rem; font-weight: 700; color: #fff; margin-top: 0.2rem; }
+
+    .loading { color: #555; font-size: 0.85rem; text-align: center; padding: 1rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="/">← Nakatomi</a>
+  <h1>Val<span>uta</span></h1>
+</header>
+
+<div class="container">
+
+  <!-- ENKEL KONVERTERING -->
+  <div class="card">
+    <h2>Konverter valuta</h2>
+    <div class="row">
+      <div class="field">
+        <label>Beløp</label>
+        <input type="number" id="amount" value="1000" min="0" oninput="convert()">
+      </div>
+      <div></div>
+      <div class="field">
+        <label>Fra</label>
+        <select id="from" onchange="convert()"></select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field" style="grid-column: 1">
+        <label>Resultat</label>
+        <div class="result-box">
+          <span class="result-amount" id="result">—</span>
+        </div>
+      </div>
+      <button class="swap-btn" onclick="swap()">⇄</button>
+      <div class="field">
+        <label>Til</label>
+        <select id="to" onchange="convert()"></select>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
+      <span class="result-date" id="rate-info" style="color:#555; font-size:0.78rem;"></span>
+      <span class="result-date" id="update-date"></span>
+    </div>
+  </div>
+
+  <!-- MULTI KONVERTERING -->
+  <div class="card">
+    <h2>Samme beløp i populære valutaer</h2>
+    <div class="multi-grid" id="multi-grid">
+      <div class="loading">Laster kurser...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const CURRENCIES = [
+    { code: 'NOK', flag: '🇳🇴', name: 'Norske kroner' },
+    { code: 'USD', flag: '🇺🇸', name: 'Amerikanske dollar' },
+    { code: 'EUR', flag: '🇪🇺', name: 'Euro' },
+    { code: 'GBP', flag: '🇬🇧', name: 'Britiske pund' },
+    { code: 'SEK', flag: '🇸🇪', name: 'Svenske kroner' },
+    { code: 'DKK', flag: '🇩🇰', name: 'Danske kroner' },
+    { code: 'CHF', flag: '🇨🇭', name: 'Sveitsiske franc' },
+    { code: 'JPY', flag: '🇯🇵', name: 'Japanske yen' },
+    { code: 'THB', flag: '🇹🇭', name: 'Thailandske baht' },
+    { code: 'AUD', flag: '🇦🇺', name: 'Australske dollar' },
+    { code: 'CAD', flag: '🇨🇦', name: 'Kanadiske dollar' },
+    { code: 'TRY', flag: '🇹🇷', name: 'Tyrkiske lira' },
+  ];
+
+  const MULTI_CURRENCIES = ['USD', 'EUR', 'GBP', 'SEK', 'DKK', 'THB', 'JPY', 'CHF'];
+
+  let rates = {};
+  let updateDate = '';
+
+  async function loadRates() {
+    try {
+      const res = await fetch('https://api.frankfurter.app/latest?base=NOK');
+      const data = await res.json();
+      rates = data.rates;
+      rates['NOK'] = 1;
+      updateDate = data.date;
+
+      populateSelects();
+      convert();
+      buildMulti();
+
+      document.getElementById('update-date').textContent = `Oppdatert: ${updateDate}`;
+    } catch (e) {
+      document.getElementById('result').textContent = 'Feil';
+    }
+  }
+
+  function populateSelects() {
+    const fromEl = document.getElementById('from');
+    const toEl = document.getElementById('to');
+
+    CURRENCIES.forEach(c => {
+      const o1 = new Option(`${c.flag} ${c.code}`, c.code);
+      const o2 = new Option(`${c.flag} ${c.code}`, c.code);
+      fromEl.appendChild(o1);
+      toEl.appendChild(o2);
+    });
+
+    fromEl.value = 'NOK';
+    toEl.value = 'EUR';
+  }
+
+  function convert() {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+
+    if (!rates[from] || !rates[to]) return;
+
+    const inNOK = amount / rates[from];
+    const result = inNOK * rates[to];
+
+    document.getElementById('result').textContent = formatAmount(result, to);
+    document.getElementById('rate-info').textContent =
+      `1 ${from} = ${(rates[to] / rates[from]).toFixed(4)} ${to}`;
+
+    buildMulti();
+  }
+
+  function swap() {
+    const from = document.getElementById('from');
+    const to = document.getElementById('to');
+    [from.value, to.value] = [to.value, from.value];
+    convert();
+  }
+
+  function buildMulti() {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const from = document.getElementById('from').value;
+    if (!rates[from]) return;
+
+    const grid = document.getElementById('multi-grid');
+    grid.innerHTML = '';
+
+    MULTI_CURRENCIES.forEach(code => {
+      if (code === from) return;
+      const c = CURRENCIES.find(x => x.code === code);
+      const inNOK = amount / rates[from];
+      const result = inNOK * rates[code];
+
+      const div = document.createElement('div');
+      div.className = 'multi-card';
+      div.innerHTML = `
+        <div class="multi-flag">${c.flag}</div>
+        <div class="multi-currency">${code}</div>
+        <div class="multi-amount">${formatAmount(result, code)}</div>
+      `;
+      grid.appendChild(div);
+    });
+  }
+
+  function formatAmount(amount, currency) {
+    const decimals = ['JPY', 'NOK', 'SEK', 'DKK', 'THB'].includes(currency) ? 0 : 2;
+    return new Intl.NumberFormat('no-NO', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(amount);
+  }
+
+  loadRates();
+</script>
+
+</body>
+</html>
