@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Bakgrunn -->
+  <rect width="512" height="512" rx="80" fill="#0a0a0a"/>
+
+  <!-- Rød ring (O) -->
+  <circle cx="256" cy="210" r="155" fill="none" stroke="#e63946" stroke-width="28"/>
+
+  <!-- N inni ringen -->
+  <text x="256" y="265"
+    font-family="'Arial Black', 'Segoe UI', Arial, sans-serif"
+    font-size="160"
+    font-weight="900"
+    fill="#ffffff"
+    text-anchor="middle">N</text>
+
+  <!-- Rød strek -->
+  <rect x="178" y="398" width="156" height="5" rx="2" fill="#e63946"/>
+
+  <!-- NAKATOMI som tspan for perfekt sentrering -->
+  <text x="256" y="455"
+    font-family="'Segoe UI', Arial, sans-serif"
+    font-size="34"
+    font-weight="800"
+    text-anchor="middle"
+    letter-spacing="8">
+    <tspan fill="#ffffff">NAK</tspan><tspan fill="#ffffff">AT</tspan><tspan fill="#e63946">O</tspan><tspan fill="#ffffff">MI</tspan>
+  </text>
+
+</svg>

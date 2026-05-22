@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava — Nakatomi</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+    }
+    .back { color: #555; text-decoration: none; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+    .back:hover { color: #e63946; }
+    h1 { font-size: 1.6rem; font-weight: 800; }
+    h1 span { color: #FC4C02; }
+
+    /* LOGIN */
+    #login-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 1.5rem;
+    }
+    .strava-btn {
+      background: #FC4C02;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.2s;
+    }
+    .strava-btn:hover { background: #e04400; }
+    .login-desc { color: #555; font-size: 0.9rem; }
+
+    /* DASHBOARD */
+    #dashboard { display: none; }
+
+    .athlete-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .athlete-bar img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #FC4C02; }
+    .athlete-name { font-size: 1.1rem; font-weight: 700; }
+    .athlete-sub { font-size: 0.8rem; color: #555; }
+
+    .year-select {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      margin-left: auto;
+      cursor: pointer;
+      outline: none;
+    }
+    .year-select:focus { border-color: #FC4C02; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .stat-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 1.3rem 1.5rem;
+    }
+    .stat-label { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: #555; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: #fff; }
+    .stat-unit { font-size: 0.85rem; color: #555; margin-left: 0.3rem; }
+
+    /* GRAFER */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .chart-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .chart-title { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: #555; margin-bottom: 1rem; }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #333;
+      color: #555;
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .logout-btn:hover { border-color: #e63946; color: #e63946; }
+
+    .loading { color: #555; text-align: center; padding: 3rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="/">← Nakatomi</a>
+  <h1>Stra<span>va</span></h1>
+</header>
+
+<!-- LOGIN -->
+<div id="login-section">
+  <p class="login-desc">Logg inn med Strava for å se statistikken din</p>
+  <a id="strava-login-btn" class="strava-btn" href="#">Koble til Strava</a>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="athlete-bar">
+    <img id="athlete-img" src="" alt="profil">
+    <div>
+      <div class="athlete-name" id="athlete-name"></div>
+      <div class="athlete-sub">Strava-profil</div>
+    </div>
+    <select class="year-select" id="year-select"></select>
+    <button class="logout-btn" onclick="logout()">Logg ut</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Aktiviteter</div>
+      <div class="stat-value" id="stat-count">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total distanse</div>
+      <div class="stat-value" id="stat-km">—<span class="stat-unit">km</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Høydemeter</div>
+      <div class="stat-value" id="stat-elev">—<span class="stat-unit">m</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total tid</div>
+      <div class="stat-value" id="stat-time">—</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">📏 Km per uke (siste 4 uker)</div>
+      <canvas id="chart-km"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">⛰️ Høydemeter per uke (siste 4 uker)</div>
+      <canvas id="chart-elev"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">⏱️ Timer per uke (siste 4 uker)</div>
+      <canvas id="chart-time"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CLIENT_ID = '249547'; // ← bytt ut med ditt Client ID
+  const REDIRECT_URI = 'https://nakatomi.no/strava.html';
+
+  // Sett login-knapp URL
+  document.getElementById('strava-login-btn').href =
+    `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&approval_prompt=force&scope=activity:read_all`;
+
+  let accessToken = null;
+  let allActivities = [];
+  let charts = {};
+
+  // --- INIT ---
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const stored = localStorage.getItem('strava_token');
+
+    if (code) {
+      window.history.replaceState({}, '', '/strava.html');
+      await exchangeToken(code);
+    } else if (stored) {
+      const token = JSON.parse(stored);
+      if (Date.now() / 1000 > token.expires_at) {
+        await refreshToken(token.refresh_token);
+      } else {
+        accessToken = token.access_token;
+        showDashboard(token.athlete);
+      }
+    }
+  }
+
+  async function exchangeToken(code) {
+    const res = await fetch(`/api/strava-token?code=${code}`);
+    const data = await res.json();
+    accessToken = data.access_token;
+    localStorage.setItem('strava_token', JSON.stringify(data));
+    showDashboard(data.athlete);
+  }
+
+  async function refreshToken(refresh_token) {
+    const res = await fetch(`/api/strava-refresh?refresh_token=${refresh_token}`);
+    const data = await res.json();
+    accessToken = data.access_token;
+    const stored = JSON.parse(localStorage.getItem('strava_token'));
+    localStorage.setItem('strava_token', JSON.stringify({ ...stored, ...data }));
+    showDashboard(stored.athlete);
+  }
+
+  function showDashboard(athlete) {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('athlete-name').textContent = `${athlete.firstname} ${athlete.lastname}`;
+    document.getElementById('athlete-img').src = athlete.profile_medium;
+
+    // Fyll år-rullegardin
+    const sel = document.getElementById('year-select');
+    const thisYear = new Date().getFullYear();
+    for (let y = thisYear; y >= thisYear - 4; y--) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y === thisYear ? `${y} (hittil)` : y;
+      sel.appendChild(opt);
+    }
+    sel.addEventListener('change', () => loadStats(parseInt(sel.value)));
+    loadStats(thisYear);
+  }
+
+  async function fetchActivities(after, before) {
+    let page = 1, all = [];
+    while (true) {
+      const res = await fetch(
+        `https://www.strava.com/api/v3/athlete/activities?after=${after}&before=${before}&per_page=100&page=${page}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const data = await res.json();
+      if (!data.length) break;
+      all = all.concat(data);
+      if (data.length < 100) break;
+      page++;
+    }
+    return all;
+  }
+
+  async function loadStats(year) {
+    document.getElementById('stat-count').textContent = '…';
+    document.getElementById('stat-km').innerHTML = '…';
+    document.getElementById('stat-elev').innerHTML = '…';
+    document.getElementById('stat-time').textContent = '…';
+
+    const after = Math.floor(new Date(`${year}-01-01`).getTime() / 1000);
+    const before = year === new Date().getFullYear()
+      ? Math.floor(Date.now() / 1000)
+      : Math.floor(new Date(`${year}-12-31T23:59:59`).getTime() / 1000);
+
+    const activities = await fetchActivities(after, before);
+    const rides = activities.filter(a => a.type === 'Ride' || a.type === 'VirtualRide');
+
+    // Totaler
+    const totalKm = rides.reduce((s, a) => s + a.distance, 0) / 1000;
+    const totalElev = rides.reduce((s, a) => s + a.total_elevation_gain, 0);
+    const totalSec = rides.reduce((s, a) => s + a.moving_time, 0);
+    const hours = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+
+    document.getElementById('stat-count').textContent = rides.length;
+    document.getElementById('stat-km').innerHTML = `${totalKm.toFixed(0)}<span class="stat-unit">km</span>`;
+    document.getElementById('stat-elev').innerHTML = `${totalElev.toFixed(0)}<span class="stat-unit">m</span>`;
+    document.getElementById('stat-time').textContent = `${hours}t ${mins}m`;
+
+    // Grafer — siste 4 uker
+    buildCharts(activities);
+  }
+
+  function buildCharts(activities) {
+    const rides = activities.filter(a => a.type === 'Ride' || a.type === 'VirtualRide');
+    const weeks = getLast4Weeks();
+    const labels = weeks.map(w => `Uke ${w.label}`);
+
+    const kmData = weeks.map(w => {
+      const acts = rides.filter(a => {
+        const d = new Date(a.start_date);
+        return d >= w.start && d <= w.end;
+      });
+      return (acts.reduce((s, a) => s + a.distance, 0) / 1000).toFixed(1);
+    });
+
+    const elevData = weeks.map(w => {
+      const acts = rides.filter(a => {
+        const d = new Date(a.start_date);
+        return d >= w.start && d <= w.end;
+      });
+      return acts.reduce((s, a) => s + a.total_elevation_gain, 0).toFixed(0);
+    });
+
+    const timeData = weeks.map(w => {
+      const acts = rides.filter(a => {
+        const d = new Date(a.start_date);
+        return d >= w.start && d <= w.end;
+      });
+      return (acts.reduce((s, a) => s + a.moving_time, 0) / 3600).toFixed(1);
+    });
+
+    makeChart('chart-km', labels, kmData, 'km', '#FC4C02');
+    makeChart('chart-elev', labels, elevData, 'm', '#e63946');
+    makeChart('chart-time', labels, timeData, 't', '#ffffff');
+  }
+
+  function getLast4Weeks() {
+    const weeks = [];
+    const now = new Date();
+    for (let i = 3; i >= 0; i--) {
+      const end = new Date(now);
+      end.setDate(now.getDate() - i * 7);
+      const start = new Date(end);
+      start.setDate(end.getDate() - 6);
+      const weekNum = getWeekNumber(end);
+      weeks.push({ start, end, label: weekNum });
+    }
+    return weeks;
+  }
+
+  function getWeekNumber(d) {
+    const date = new Date(d);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+    const week1 = new Date(date.getFullYear(), 0, 4);
+    return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  }
+
+  function makeChart(id, labels, data, unit, color) {
+    if (charts[id]) charts[id].destroy();
+    const ctx = document.getElementById(id).getContext('2d');
+    charts[id] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: color + '33',
+          borderColor: color,
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: { label: ctx => `${ctx.raw} ${unit}` }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#555' }, grid: { color: '#1a1a1a' } },
+          y: { ticks: { color: '#555' }, grid: { color: '#1a1a1a' } }
+        }
+      }
+    });
+  }
+
+  function logout() {
+    localStorage.removeItem('strava_token');
+    location.reload();
+  }
+
+  init();
+</script>
+</body>
+</html>
