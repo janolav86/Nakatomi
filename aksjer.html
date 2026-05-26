@@ -165,7 +165,7 @@ function analyze() {
   statusEl.className = "";
   statusEl.textContent = "Søker etter markedsdata og analyserer…";
 
-  fetch("/api/aksjer", {
+  fetch("https://www.nakatomi.no/api/aksjer", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -183,9 +183,9 @@ function analyze() {
     render(r);
     statusEl.textContent = "";
   })
-  .catch(function() {
+  .catch(function(err) {
     statusEl.className = "error";
-    statusEl.textContent = "Kunne ikke hente analyse. Sjekk at tickeren er gyldig og prøv igjen.";
+    statusEl.textContent = "Feil: " + err.message;
   })
   .finally(function() {
     btn.disabled = false;
