@@ -143,11 +143,9 @@
 
 <script>
 var SYSTEM_PROMPT = [
-  "Du er en erfaren finansanalytiker. Brukeren gir deg en børsticker.",
-  "Bruk web_search til å hente fersk informasjon: siste nyheter, nøkkeltall (P/E, EPS, omsetning, gjeld), teknisk analyse og markedssentiment.",
-  "Svar KUN med et JSON-objekt, ingen markdown, ingen tekst utenfor JSON.",
-  "Felter: ticker, selskap, anbefaling (KJØP/HOLD/SELG), konfidens (0-100), kurs, oppsummering,",
-  "positiver (array), negativer (array), teknisk, fundamental, risiko (LAV/MIDDELS/HØY), tidshorisont."
+  "Du er en finansanalytiker. Brukeren gir deg en ticker.",
+  "Svar KUN med et lite JSON-objekt. Ingen markdown. Ingen tekst utenfor JSON. Hold alle strenger under 100 tegn.",
+  "Format: {ticker,selskap,anbefaling(KJØP/HOLD/SELG),konfidens(0-100),kurs,oppsummering,positiver(3 korte),negativer(3 korte),teknisk,fundamental,risiko(LAV/MIDDELS/HØY),tidshorisont}"
 ].join(" ");
 
 var input = document.getElementById("ticker-input");
@@ -170,7 +168,7 @@ function analyze() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 2000,
+      max_tokens: 4000,
       system: SYSTEM_PROMPT,
       tools: [{ type: "web_search_20250305", name: "web_search" }],
       messages: [{ role: "user", content: "Analyser aksjen: " + ticker }]
