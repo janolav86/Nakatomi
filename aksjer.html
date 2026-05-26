@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aksjer — Nakatomi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+    }
+    .back { color: #555; text-decoration: none; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+    .back:hover { color: #e63946; }
+    h1 { font-size: 1.6rem; font-weight: 800; }
+    h1 span { color: #e63946; }
+
+    .search-row { display: flex; gap: 0.6rem; margin-bottom: 2.5rem; flex-wrap: wrap; }
+    .search-row input {
+      flex: 1; min-width: 160px;
+      background: #141414; border: 1px solid #222; border-radius: 8px;
+      color: #fff; padding: 0.65rem 1rem; font-size: 0.95rem;
+      font-family: inherit; outline: none; transition: border-color 0.2s;
+    }
+    .search-row input:focus { border-color: #e63946; }
+    .search-row button {
+      background: #e63946; color: #fff; border: none; border-radius: 8px;
+      padding: 0.65rem 1.4rem; font-weight: 700; font-size: 0.88rem;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+      font-family: inherit; transition: background 0.15s;
+    }
+    .search-row button:hover { background: #c72d38; }
+    .search-row button:disabled { background: #1e1e1e; color: #444; cursor: not-allowed; }
+
+    #status { font-size: 0.78rem; color: #555; letter-spacing: 0.08em; margin-bottom: 1.5rem; min-height: 1.2rem; }
+    #status.error { color: #e63946; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem; margin-bottom: 2.5rem;
+    }
+    .stat-card { background: #141414; border: 1px solid #222; border-radius: 12px; padding: 1.3rem 1.5rem; }
+    .stat-label { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: #555; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 1.9rem; font-weight: 800; color: #fff; }
+    .stat-sub { font-size: 0.78rem; color: #555; margin-top: 0.2rem; }
+
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+    .chart-card { background: #141414; border: 1px solid #222; border-radius: 12px; padding: 1.5rem; }
+    .chart-title { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: #555; margin-bottom: 1rem; }
+    .chart-card p { font-size: 0.88rem; color: #bbb; line-height: 1.7; }
+    .chart-card ul { padding-left: 1.1rem; margin: 0; }
+    .chart-card li { font-size: 0.85rem; line-height: 1.6; margin-bottom: 4px; }
+
+    #results { display: none; }
+    .disclaimer { margin-top: 2.5rem; font-size: 0.72rem; color: #333; letter-spacing: 0.12em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="/">← Nakatomi</a>
+  <h1>Aksje<span>analyse</span></h1>
+</header>
+
+<div class="search-row">
+  <input id="ticker-input" type="text" placeholder="Skriv ticker, f.eks. EQNR, AAPL, TSLA" autocomplete="off" spellcheck="false" />
+  <button id="analyze-btn">Analyser</button>
+</div>
+
+<div id="status"></div>
+
+<div id="results">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Ticker</div>
+      <div class="stat-value" id="r-ticker">—</div>
+      <div class="stat-sub" id="r-selskap"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Anbefaling</div>
+      <div class="stat-value" id="r-anbefaling">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Konfidens</div>
+      <div class="stat-value" id="r-konfidens">—</div>
+      <div class="stat-sub">prosent</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Kurs</div>
+      <div class="stat-value" style="font-size:1.3rem" id="r-kurs">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Risiko</div>
+      <div class="stat-value" style="font-size:1.3rem" id="r-risiko">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tidshorisont</div>
+      <div class="stat-value" style="font-size:1rem;padding-top:0.3rem" id="r-horisont">—</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card" style="grid-column: 1 / -1">
+      <div class="chart-title">Oppsummering</div>
+      <p id="r-oppsummering"></p>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Positive faktorer</div>
+      <ul id="r-positiver"></ul>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Risikofaktorer</div>
+      <ul id="r-negativer"></ul>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Teknisk analyse</div>
+      <p id="r-teknisk"></p>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Fundamental analyse</div>
+      <p id="r-fundamental"></p>
+    </div>
+  </div>
+
+  <p class="disclaimer">Ikke finansiell rådgivning — gjør alltid din egen research</p>
+</div>
+
+<script>
+var SYSTEM_PROMPT = [
+  "Du er en erfaren finansanalytiker. Brukeren gir deg en børsticker.",
+  "Bruk web_search til å hente fersk informasjon: siste nyheter, nøkkeltall (P/E, EPS, omsetning, gjeld), teknisk analyse og markedssentiment.",
+  "Svar KUN med et JSON-objekt, ingen markdown, ingen tekst utenfor JSON.",
+  "Felter: ticker, selskap, anbefaling (KJØP/HOLD/SELG), konfidens (0-100), kurs, oppsummering,",
+  "positiver (array), negativer (array), teknisk, fundamental, risiko (LAV/MIDDELS/HØY), tidshorisont."
+].join(" ");
+
+var input = document.getElementById("ticker-input");
+var btn = document.getElementById("analyze-btn");
+var statusEl = document.getElementById("status");
+
+input.addEventListener("keydown", function(e) { if (e.key === "Enter") analyze(); });
+btn.addEventListener("click", analyze);
+
+function analyze() {
+  var ticker = input.value.trim().toUpperCase();
+  if (!ticker) return;
+  btn.disabled = true;
+  document.getElementById("results").style.display = "none";
+  statusEl.className = "";
+  statusEl.textContent = "Søker etter markedsdata og analyserer…";
+
+  fetch("/api/aksjer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: SYSTEM_PROMPT,
+      tools: [{ type: "web_search_20250305", name: "web_search" }],
+      messages: [{ role: "user", content: "Analyser aksjen: " + ticker }]
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    var text = data.content.filter(function(b) { return b.type === "text"; }).map(function(b) { return b.text; }).join("");
+    var r = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
+    render(r);
+    statusEl.textContent = "";
+  })
+  .catch(function() {
+    statusEl.className = "error";
+    statusEl.textContent = "Kunne ikke hente analyse. Sjekk at tickeren er gyldig og prøv igjen.";
+  })
+  .finally(function() {
+    btn.disabled = false;
+  });
+}
+
+function render(r) {
+  var ac = r.anbefaling === "KJØP" ? "#22c55e" : r.anbefaling === "SELG" ? "#e63946" : "#f59e0b";
+  var rc = r.risiko === "LAV" ? "#22c55e" : r.risiko === "HØY" ? "#e63946" : "#f59e0b";
+
+  setText("r-ticker", r.ticker);
+  setText("r-selskap", r.selskap);
+  setColor("r-anbefaling", r.anbefaling, ac);
+  setText("r-konfidens", r.konfidens + "%");
+  setText("r-kurs", r.kurs);
+  setColor("r-risiko", r.risiko, rc);
+  setText("r-horisont", r.tidshorisont);
+  setText("r-oppsummering", r.oppsummering);
+  setText("r-teknisk", r.teknisk);
+  setText("r-fundamental", r.fundamental);
+
+  document.getElementById("r-positiver").innerHTML = r.positiver.map(function(p) {
+    return "<li style='color:#86efac'>" + p + "</li>";
+  }).join("");
+  document.getElementById("r-negativer").innerHTML = r.negativer.map(function(n) {
+    return "<li style='color:#fca5a5'>" + n + "</li>";
+  }).join("");
+
+  document.getElementById("results").style.display = "block";
+}
+
+function setText(id, val) { document.getElementById(id).textContent = val; }
+function setColor(id, val, color) {
+  var el = document.getElementById(id);
+  el.textContent = val;
+  el.style.color = color;
+}
+</script>
+</body>
+</html>
