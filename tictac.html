@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bondesjakk – Nakatomi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    a.back {
+      position: fixed;
+      top: 1.4rem;
+      left: 1.4rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    a.back:hover { color: #e63946; }
+
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 0.2rem;
+    }
+    .logo span { color: #e63946; }
+
+    .page-title {
+      font-size: 0.78rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 2rem;
+    }
+
+    /* Mode selector */
+    .mode-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.8rem;
+    }
+    .mode-btn {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      color: #888;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.5rem 1.1rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .mode-btn:hover { border-color: #444; color: #ccc; }
+    .mode-btn.active {
+      border-color: #e63946;
+      color: #fff;
+      background: #1a1010;
+    }
+
+    /* Score board */
+    .scoreboard {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.6rem;
+      align-items: center;
+    }
+    .score-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .score-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #444;
+    }
+    .score-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .score-sep {
+      font-size: 1.2rem;
+      color: #333;
+      font-weight: 300;
+    }
+    .x-color { color: #e63946; }
+    .o-color { color: #4a90d9; }
+
+    /* Status */
+    .status {
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 1.4rem;
+      min-height: 1.2em;
+      text-align: center;
+      transition: color 0.2s;
+    }
+    .status.x-turn { color: #e63946; }
+    .status.o-turn { color: #4a90d9; }
+    .status.win { color: #f0c040; }
+    .status.draw { color: #888; }
+
+    /* Board */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 1.6rem;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      user-select: none;
+      position: relative;
+    }
+    .cell:hover:not(.taken):not(.frozen) {
+      background: #1a1a1a;
+      border-color: #444;
+      transform: scale(1.04);
+    }
+    .cell.taken { cursor: default; }
+    .cell.frozen { cursor: default; }
+    .cell.x { color: #e63946; }
+    .cell.o { color: #4a90d9; }
+    .cell.win-cell {
+      border-color: #f0c040;
+      background: #1a1800;
+    }
+    .cell .mark {
+      animation: pop 0.15s ease-out;
+    }
+    @keyframes pop {
+      0%   { transform: scale(0.5); opacity: 0.4; }
+      70%  { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 0.7rem;
+    }
+    .btn {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      color: #aaa;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.4rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn:hover { border-color: #e63946; color: #fff; background: #1a1010; }
+    .btn.primary {
+      border-color: #e63946;
+      color: #fff;
+      background: #1a1010;
+    }
+
+    .footer {
+      margin-top: 3rem;
+      font-size: 0.68rem;
+      color: #2a2a2a;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 400px) {
+      .cell { width: 86px; height: 86px; font-size: 2.4rem; border-radius: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="back" href="index.html">← Nakatomi</a>
+
+  <div class="logo">Nakat<span>o</span>mi</div>
+  <div class="page-title">Bondesjakk</div>
+
+  <div class="mode-bar">
+    <button class="mode-btn active" id="btn-pvp" onclick="setMode('pvp')">2 spillere</button>
+    <button class="mode-btn" id="btn-ai" onclick="setMode('ai')">Mot AI</button>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-item">
+      <div class="score-label x-color">X</div>
+      <div class="score-value" id="score-x">0</div>
+    </div>
+    <div class="score-sep">/</div>
+    <div class="score-item">
+      <div class="score-label" style="color:#555">Uavgjort</div>
+      <div class="score-value" style="color:#444" id="score-d">0</div>
+    </div>
+    <div class="score-sep">/</div>
+    <div class="score-item">
+      <div class="score-label o-color">O</div>
+      <div class="score-value" id="score-o">0</div>
+    </div>
+  </div>
+
+  <div class="status" id="status">X sin tur</div>
+
+  <div class="board" id="board">
+    <div class="cell" id="c0" onclick="move(0)"></div>
+    <div class="cell" id="c1" onclick="move(1)"></div>
+    <div class="cell" id="c2" onclick="move(2)"></div>
+    <div class="cell" id="c3" onclick="move(3)"></div>
+    <div class="cell" id="c4" onclick="move(4)"></div>
+    <div class="cell" id="c5" onclick="move(5)"></div>
+    <div class="cell" id="c6" onclick="move(6)"></div>
+    <div class="cell" id="c7" onclick="move(7)"></div>
+    <div class="cell" id="c8" onclick="move(8)"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn primary" onclick="resetBoard()">Ny runde</button>
+    <button class="btn" onclick="resetAll()">Nullstill</button>
+  </div>
+
+  <div class="footer">nakatomi.no</div>
+
+  <script>
+    const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+    let board = Array(9).fill(null);
+    let current = 'X';
+    let gameOver = false;
+    let mode = 'pvp';
+    let scores = { X: 0, O: 0, D: 0 };
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById('btn-pvp').classList.toggle('active', m === 'pvp');
+      document.getElementById('btn-ai').classList.toggle('active', m === 'ai');
+      resetBoard();
+    }
+
+    function move(i) {
+      if (gameOver || board[i]) return;
+      if (mode === 'ai' && current === 'O') return;
+      place(i, current);
+      if (!gameOver && mode === 'ai' && current === 'O') {
+        setTimeout(aiMove, 300);
+      }
+    }
+
+    function place(i, player) {
+      board[i] = player;
+      const cell = document.getElementById('c' + i);
+      cell.innerHTML = `<span class="mark">${player}</span>`;
+      cell.classList.add('taken', player.toLowerCase());
+
+      const win = checkWin();
+      if (win) {
+        win.forEach(idx => document.getElementById('c' + idx).classList.add('win-cell'));
+        scores[player]++;
+        updateScore();
+        setStatus(`${player} vinner!`, 'win');
+        freezeBoard();
+        gameOver = true;
+      } else if (board.every(Boolean)) {
+        scores.D++;
+        updateScore();
+        setStatus('Uavgjort!', 'draw');
+        gameOver = true;
+      } else {
+        current = player === 'X' ? 'O' : 'X';
+        if (mode === 'ai' && current === 'O') {
+          setStatus('AI tenker…', 'o-turn');
+        } else {
+          setStatus(`${current} sin tur`, current === 'X' ? 'x-turn' : 'o-turn');
+        }
+      }
+    }
+
+    function checkWin() {
+      for (const [a, b, c] of WINS) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) return [a, b, c];
+      }
+      return null;
+    }
+
+    function freezeBoard() {
+      document.querySelectorAll('.cell:not(.taken)').forEach(c => c.classList.add('frozen'));
+    }
+
+    function setStatus(msg, cls) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status ' + (cls || '');
+    }
+
+    function updateScore() {
+      document.getElementById('score-x').textContent = scores.X;
+      document.getElementById('score-o').textContent = scores.O;
+      document.getElementById('score-d').textContent = scores.D;
+    }
+
+    function resetBoard() {
+      board = Array(9).fill(null);
+      current = 'X';
+      gameOver = false;
+      for (let i = 0; i < 9; i++) {
+        const c = document.getElementById('c' + i);
+        c.innerHTML = '';
+        c.className = 'cell';
+      }
+      setStatus('X sin tur', 'x-turn');
+    }
+
+    function resetAll() {
+      scores = { X: 0, O: 0, D: 0 };
+      updateScore();
+      resetBoard();
+    }
+
+    /* Minimax AI */
+    function aiMove() {
+      const idx = bestMove();
+      place(idx, 'O');
+    }
+
+    function bestMove() {
+      let best = -Infinity, move = -1;
+      for (let i = 0; i < 9; i++) {
+        if (!board[i]) {
+          board[i] = 'O';
+          const score = minimax(board, 0, false);
+          board[i] = null;
+          if (score > best) { best = score; move = i; }
+        }
+      }
+      return move;
+    }
+
+    function minimax(b, depth, isMax) {
+      const w = winner(b);
+      if (w === 'O') return 10 - depth;
+      if (w === 'X') return depth - 10;
+      if (b.every(Boolean)) return 0;
+
+      if (isMax) {
+        let best = -Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (!b[i]) { b[i] = 'O'; best = Math.max(best, minimax(b, depth+1, false)); b[i] = null; }
+        }
+        return best;
+      } else {
+        let best = Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (!b[i]) { b[i] = 'X'; best = Math.min(best, minimax(b, depth+1, true)); b[i] = null; }
+        }
+        return best;
+      }
+    }
+
+    function winner(b) {
+      for (const [a, c, d] of WINS) {
+        if (b[a] && b[a] === b[c] && b[a] === b[d]) return b[a];
+      }
+      return null;
+    }
+  </script>
+</body>
+</html>
