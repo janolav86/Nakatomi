@@ -63,10 +63,77 @@
 
     #results { display: none; }
     .disclaimer { margin-top: 2.5rem; font-size: 0.72rem; color: #333; letter-spacing: 0.12em; text-transform: uppercase; }
+
+    /* PIN LOCK */
+    #pin-overlay {
+      position: fixed; inset: 0;
+      background: #0a0a0a;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100; gap: 2rem;
+    }
+    #pin-overlay .pin-logo { font-size: 1.4rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+    #pin-overlay .pin-logo span { color: #e63946; }
+    #pin-overlay .pin-label { font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: #555; }
+    .pin-dots { display: flex; gap: 1rem; }
+    .pin-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid #333; background: transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .pin-dot.filled { background: #e63946; border-color: #e63946; }
+    .pin-dot.error { background: #e63946; border-color: #e63946; animation: shake 0.35s ease; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+    .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+    .pin-key {
+      width: 72px; height: 72px;
+      background: #141414; border: 1px solid #222; border-radius: 12px;
+      color: #fff; font-size: 1.4rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.1s, border-color 0.1s;
+      user-select: none;
+    }
+    .pin-key:hover { background: #1e1e1e; border-color: #444; }
+    .pin-key:active { background: #2a1010; border-color: #e63946; }
+    .pin-key.del { font-size: 1rem; color: #555; }
+    .pin-key.empty { visibility: hidden; cursor: default; }
   </style>
 </head>
 <body>
 
+<!-- PIN LOCK -->
+<div id="pin-overlay">
+  <div class="pin-logo">Nakat<span>o</span>mi</div>
+  <div class="pin-label">Skriv inn kode</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-pad">
+    <div class="pin-key" onclick="pinPress('1')">1</div>
+    <div class="pin-key" onclick="pinPress('2')">2</div>
+    <div class="pin-key" onclick="pinPress('3')">3</div>
+    <div class="pin-key" onclick="pinPress('4')">4</div>
+    <div class="pin-key" onclick="pinPress('5')">5</div>
+    <div class="pin-key" onclick="pinPress('6')">6</div>
+    <div class="pin-key" onclick="pinPress('7')">7</div>
+    <div class="pin-key" onclick="pinPress('8')">8</div>
+    <div class="pin-key" onclick="pinPress('9')">9</div>
+    <div class="pin-key empty"></div>
+    <div class="pin-key" onclick="pinPress('0')">0</div>
+    <div class="pin-key del" onclick="pinDel()">⌫</div>
+  </div>
+</div>
+
+<div id="main-content" style="display:none">
 <header>
   <a class="back" href="/">← Nakatomi</a>
   <h1>Aksje<span>analyse</span></h1>
@@ -140,6 +207,55 @@
 
   <p class="disclaimer">Ikke finansiell rådgivning — gjør alltid din egen research</p>
 </div>
+</div> <!-- /main-content -->
+
+<script>
+var PIN = "6040";
+var pinEntry = "";
+
+if (sessionStorage.getItem("aksjer_unlocked") === "1") unlock();
+
+function pinPress(digit) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += digit;
+  updateDots();
+  if (pinEntry.length === 4) {
+    if (pinEntry === PIN) {
+      sessionStorage.setItem("aksjer_unlocked", "1");
+      setTimeout(unlock, 120);
+    } else {
+      document.querySelectorAll(".pin-dot").forEach(function(d) { d.classList.add("error"); });
+      setTimeout(function() {
+        pinEntry = "";
+        document.querySelectorAll(".pin-dot").forEach(function(d) { d.classList.remove("filled", "error"); });
+      }, 500);
+    }
+  }
+}
+
+function pinDel() {
+  if (pinEntry.length === 0) return;
+  pinEntry = pinEntry.slice(0, -1);
+  updateDots();
+}
+
+function updateDots() {
+  for (var i = 0; i < 4; i++) {
+    document.getElementById("d" + i).classList.toggle("filled", i < pinEntry.length);
+  }
+}
+
+function unlock() {
+  document.getElementById("pin-overlay").style.display = "none";
+  document.getElementById("main-content").style.display = "block";
+}
+
+document.addEventListener("keydown", function(e) {
+  if (document.getElementById("pin-overlay").style.display === "none") return;
+  if (e.key >= "0" && e.key <= "9") pinPress(e.key);
+  if (e.key === "Backspace") pinDel();
+});
+</script>
 
 <script>
 var SYSTEM_PROMPT = [
