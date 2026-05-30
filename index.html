@@ -107,6 +107,8 @@
     .card:hover { border-color: #2a2a2a; background: #181818; }
     .card:hover::before { transform: scaleY(1); }
 
+    .card-icon { margin-bottom: 0.4rem; line-height: 1; }
+
     .card-sublabel {
       font-size: 0.65rem;
       letter-spacing: 0.18em;
@@ -170,6 +172,13 @@
     <div class="cat-grid">
 
       <a class="card" href="valuta.html">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="18" fill="none" stroke="#e63946" stroke-width="3"/>
+            <text x="11" y="25" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff">$</text>
+            <text x="22" y="25" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="800" fill="#e63946">€</text>
+          </svg>
+        </div>
         <div class="card-sublabel">Live kurser</div>
         <div class="card-title">Valuta</div>
         <div class="card-desc">Live valutakurser og kalkulator</div>
@@ -177,6 +186,7 @@
       </a>
 
       <a class="card" href="aksjer.html">
+        <div class="card-icon" style="font-size:1.6rem">📈</div>
         <div class="card-sublabel">AI-analyse</div>
         <div class="card-title">Aksjeanalyse</div>
         <div class="card-desc">Kjøp, hold eller selg – basert på ferske markedsdata</div>
@@ -184,6 +194,7 @@
       </a>
 
       <a class="card" href="/kalkulator">
+        <div class="card-icon" style="font-size:1.6rem">🧮</div>
         <div class="card-sublabel">Beregning</div>
         <div class="card-title">Kalkulatorer</div>
         <div class="card-desc">Nyttige kalkulatorer for hverdagen</div>
@@ -199,6 +210,7 @@
       <div class="cat-label">Reise</div>
       <div class="cat-grid">
         <a class="card" href="eurobonus.html">
+          <div class="card-icon" style="font-size:1rem; font-weight:800; letter-spacing:0.1em; color:#4a90d9;">SAS</div>
           <div class="card-sublabel">SAS EuroBonus</div>
           <div class="card-title">Bonusreiser</div>
           <div class="card-desc">Søk etter bonusreiser uten innlogging</div>
@@ -211,6 +223,7 @@
       <div class="cat-label">Aktivitet</div>
       <div class="cat-grid">
         <a class="card" href="strava.html">
+          <div class="card-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/c/cb/Strava_Logo.svg" height="20"></div>
           <div class="card-sublabel">Strava</div>
           <div class="card-title">Treningsstatistikk</div>
           <div class="card-desc">Turer, høydemeter og oversikt</div>
@@ -223,6 +236,7 @@
       <div class="cat-label">Spill</div>
       <div class="cat-grid">
         <a class="card" href="tictac.html">
+          <div class="card-icon" style="font-size:1.6rem">⊞</div>
           <div class="card-sublabel">Mot venn eller AI</div>
           <div class="card-title">Tic-Tac</div>
           <div class="card-desc">Spill mot en venn eller mot AI</div>
