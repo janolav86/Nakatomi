@@ -17,31 +17,24 @@
 
     .site-header {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: 1.5rem 2rem;
+      padding: 2.5rem 2rem 2rem;
       border-bottom: 1px solid #1a1a1a;
+      gap: 0.5rem;
     }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 1.2rem;
-    }
+    .header-left { display: contents; }
 
     .logo {
-      font-size: 1.6rem;
+      font-size: 2rem;
       font-weight: 800;
       letter-spacing: 0.2em;
       text-transform: uppercase;
     }
     .logo span { color: #e63946; }
 
-    .header-divider {
-      width: 1px;
-      height: 22px;
-      background: #2a2a2a;
-    }
+    .header-divider { display: none; }
 
     .tagline {
       font-size: 0.72rem;
@@ -50,12 +43,7 @@
       color: #444;
     }
 
-    .header-right {
-      font-size: 0.72rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #333;
-    }
+    .header-right { display: none; }
 
     main {
       max-width: 960px;
