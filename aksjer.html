@@ -214,15 +214,12 @@
 var PIN = "6040";
 var pinEntry = "";
 
-if (sessionStorage.getItem("aksjer_unlocked") === "1") unlock();
-
 function pinPress(digit) {
   if (pinEntry.length >= 4) return;
   pinEntry += digit;
   updateDots();
   if (pinEntry.length === 4) {
     if (pinEntry === PIN) {
-      sessionStorage.setItem("aksjer_unlocked", "1");
       setTimeout(unlock, 120);
     } else {
       document.querySelectorAll(".pin-dot").forEach(function(d) { d.classList.add("error"); });
