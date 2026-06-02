@@ -217,8 +217,7 @@ function fetchFlight() {
   statusEl.textContent = 'Henter flydata…';
   btn.disabled = true;
 
-  var padded = (currentCs + '        ').slice(0, 8);
-  var url = 'https://opensky-network.org/api/states/all?callsign=' + encodeURIComponent(padded);
+  var url = '/api/flight?callsign=' + encodeURIComponent(currentCs);
 
   fetch(url)
     .then(function(r) {
