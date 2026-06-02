@@ -126,7 +126,7 @@
       <div class="info-sub">grader</div>
     </div>
     <div class="info-card">
-      <div class="info-label">Registrert i</div>
+      <div class="info-label">Flytype</div>
       <div class="info-value" id="i-country" style="font-size:0.9rem">—</div>
     </div>
     <div class="info-card">
@@ -225,20 +225,19 @@ function fetchFlight() {
       return r.json();
     })
     .then(function(data) {
-      if (!data.states || data.states.length === 0) {
+      if (!data.ac || data.ac.length === 0) {
         statusEl.className = 'error';
         statusEl.textContent = 'Fant ikke "' + currentCs + '". Flyet er kanskje ikke i lufta, eller callsign er feil.';
         return;
       }
-      var s = data.states[0];
-      var lat = s[6], lon = s[5];
-      if (lat == null || lon == null) {
+      var ac = data.ac[0];
+      if (ac.lat == null || ac.lon == null) {
         statusEl.className = 'error';
         statusEl.textContent = 'Fly funnet, men ingen posisjonsdata ennå.';
         return;
       }
-      renderMap(s);
-      renderInfo(s);
+      renderMap(ac);
+      renderInfo(ac);
       statusEl.className = 'ok';
       var tid = new Date().toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       statusEl.textContent = 'Sist oppdatert ' + tid + '  —  oppdateres automatisk hvert 15. sek';
@@ -250,8 +249,8 @@ function fetchFlight() {
     .finally(function() { btn.disabled = false; });
 }
 
-function renderMap(s) {
-  var lat = s[6], lon = s[5], hdg = s[10] || 0;
+function renderMap(ac) {
+  var lat = ac.lat, lon = ac.lon, hdg = ac.track || 0;
 
   trackPoints.push([lat, lon]);
   if (trackPoints.length > 120) trackPoints.shift();
@@ -270,18 +269,19 @@ function renderMap(s) {
   }
 }
 
-function renderInfo(s) {
-  var cs = (s[1] || '').trim();
-  var alt = s[13] != null ? Math.round(s[13]) : (s[7] != null ? Math.round(s[7]) : null);
-  var spd = s[9] != null ? Math.round(s[9] * 3.6) : null;
-  var hdg = s[10] != null ? Math.round(s[10]) : null;
-  var onGround = s[8];
+function renderInfo(ac) {
+  var cs = (ac.flight || '').trim();
+  var altFt = ac.alt_geom || ac.alt_baro;
+  var alt = (typeof altFt === 'number') ? Math.round(altFt * 0.3048) : null;
+  var spd = ac.gs != null ? Math.round(ac.gs * 1.852) : null;
+  var hdg = ac.track != null ? Math.round(ac.track) : null;
+  var onGround = ac.alt_baro === 'ground' || ac.on_ground === true;
 
   document.getElementById('i-cs').textContent = cs || currentCs;
   document.getElementById('i-alt').textContent = alt != null ? alt.toLocaleString('no-NO') : '—';
   document.getElementById('i-spd').textContent = spd != null ? spd.toLocaleString('no-NO') : '—';
   document.getElementById('i-hdg').textContent = hdg != null ? hdg + '°' : '—';
-  document.getElementById('i-country').textContent = s[2] || '—';
+  document.getElementById('i-country').textContent = ac.t || '—';
 
   var gEl = document.getElementById('i-ground');
   gEl.textContent = onGround ? 'På bakken' : 'I lufta';
