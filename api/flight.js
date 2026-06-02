@@ -1,6 +1,7 @@
 // Airlines that operate under multiple ICAO codes
 const VARIANTS = {
-  NAX: ['NAX', 'IBK', 'NAN', 'NFD'],
+  NOZ: ['NOZ', 'NAX', 'IBK', 'NAN', 'NFD'],
+  NAX: ['NAX', 'NOZ', 'IBK', 'NAN', 'NFD'],
   SAS: ['SAS', 'SCR'],
   RYR: ['RYR', 'RUK'],
   EZY: ['EZY', 'EZS'],
