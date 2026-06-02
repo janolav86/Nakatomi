@@ -153,9 +153,80 @@
       main { padding: 2rem 1.5rem 3rem; gap: 2rem; }
       .categories-row { gap: 2rem; }
     }
+
+    /* INTRO */
+    #intro {
+      position: fixed; inset: 0; z-index: 1000;
+      background: #0a0a0a;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1.2rem;
+    }
+    #intro.fade-out {
+      animation: introOut 0.5s ease forwards;
+    }
+    @keyframes introOut {
+      to { opacity: 0; }
+    }
+    .intro-logo {
+      font-size: 2.8rem; font-weight: 800;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      display: flex;
+    }
+    .intro-logo span {
+      display: inline-block;
+      opacity: 0; transform: translateY(12px);
+      animation: letterIn 0.35s ease forwards;
+    }
+    .intro-logo .o { color: #e63946; }
+    @keyframes letterIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .intro-line {
+      width: 0; height: 1px; background: #e63946;
+      animation: lineIn 0.4s ease forwards;
+      animation-delay: 1s;
+    }
+    @keyframes lineIn {
+      to { width: 120px; }
+    }
+    .intro-tagline {
+      font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: #444; opacity: 0;
+      animation: tagIn 0.4s ease forwards;
+      animation-delay: 1.1s;
+    }
+    @keyframes tagIn {
+      to { opacity: 1; color: #555; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #intro { display: none; }
+    }
   </style>
 </head>
 <body>
+
+<div id="intro">
+  <div class="intro-logo">
+    <span style="animation-delay:0.05s">N</span><span style="animation-delay:0.13s">A</span><span style="animation-delay:0.21s">K</span><span style="animation-delay:0.29s">A</span><span style="animation-delay:0.37s">T</span><span class="o" style="animation-delay:0.45s">O</span><span style="animation-delay:0.53s">M</span><span style="animation-delay:0.61s">I</span>
+  </div>
+  <div class="intro-line"></div>
+  <div class="intro-tagline">Verktøy som faktisk funker</div>
+</div>
+
+<script>
+  (function() {
+    if (sessionStorage.getItem('intro-seen')) {
+      document.getElementById('intro').style.display = 'none';
+      return;
+    }
+    sessionStorage.setItem('intro-seen', '1');
+    setTimeout(function() {
+      var el = document.getElementById('intro');
+      el.classList.add('fade-out');
+      setTimeout(function() { el.style.display = 'none'; }, 500);
+    }, 1800);
+  })();
+</script>
 
 <header class="site-header">
   <div class="header-left">
