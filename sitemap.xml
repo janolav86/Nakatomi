@@ -5,23 +5,35 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.nakatomi.no/valuta.html</loc>
+    <loc>https://www.nakatomi.no/valuta</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.nakatomi.no/aksjer.html</loc>
+    <loc>https://www.nakatomi.no/aksjer</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.nakatomi.no/eurobonus.html</loc>
+    <loc>https://www.nakatomi.no/eurobonus</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.nakatomi.no/strava.html</loc>
+    <loc>https://www.nakatomi.no/strava</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.nakatomi.no/tictac.html</loc>
+    <loc>https://www.nakatomi.no/klubb</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.nakatomi.no/flight</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.nakatomi.no/tictac</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.nakatomi.no/snake</loc>
     <priority>0.6</priority>
   </url>
 </urlset>
