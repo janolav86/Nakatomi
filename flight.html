@@ -156,14 +156,15 @@ var refreshTimer = null;
 var currentCs = null;
 
 function planeIcon(hdg) {
+  var svg = '<svg width="44" height="44" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(' + (hdg||0) + 'deg);transform-origin:50% 50%;display:block">' +
+    '<path d="M30 3 C32 3 34 12 34 22 L34 46 C34 50 32 56 30 58 C28 56 26 50 26 46 L26 22 C26 12 28 3 30 3 Z" fill="#e63946" stroke="#111" stroke-width="1.5"/>' +
+    '<path d="M34 24 L58 42 L54 46 L30 32 L6 46 L2 42 L26 24 Z" fill="#e63946" stroke="#111" stroke-width="1.5"/>' +
+    '<path d="M30 46 L42 54 L39 57 L30 51 L21 57 L18 54 Z" fill="#e63946" stroke="#111" stroke-width="1.5"/>' +
+    '</svg>';
   return L.divIcon({
-    html: '<svg width="34" height="34" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(' + (hdg || 0) + 'deg);transform-origin:50% 50%;display:block">' +
-      '<polygon points="17,2 21,19 17,16 13,19" fill="#e63946" stroke="#000" stroke-width="0.8" stroke-linejoin="round"/>' +
-      '<polygon points="5,21 17,16 29,21 26,23 17,19 8,23" fill="#e63946" stroke="#000" stroke-width="0.8" stroke-linejoin="round"/>' +
-      '<polygon points="13,29 17,26 21,29 19,32 17,30 15,32" fill="#e63946" stroke="#000" stroke-width="0.8" stroke-linejoin="round"/>' +
-      '</svg>',
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
+    html: svg,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
     className: ''
   });
 }
@@ -255,10 +256,16 @@ function renderMap(ac) {
   trackPoints.push([lat, lon]);
   if (trackPoints.length > 120) trackPoints.shift();
 
-  if (trackLine) map.removeLayer(trackLine);
+  if (trackLine) { trackLine.forEach(function(l) { map.removeLayer(l); }); }
+  trackLine = [];
   if (trackPoints.length > 1) {
-    trackLine = L.polyline(trackPoints, { color: '#e63946', weight: 2, opacity: 0.45 }).addTo(map);
+    trackLine.push(L.polyline(trackPoints, { color: '#e63946', weight: 3, opacity: 0.6 }).addTo(map));
   }
+  trackPoints.forEach(function(p, i) {
+    if (i < trackPoints.length - 1) {
+      trackLine.push(L.circleMarker(p, { radius: 3, color: '#e63946', fillColor: '#e63946', fillOpacity: 0.5, weight: 0 }).addTo(map));
+    }
+  });
 
   if (planeMarker) {
     planeMarker.setLatLng([lat, lon]);
