@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Tracker — Nakatomi</title>
+  <link rel="icon" type="image/svg+xml" href="/nakatomi-icon.svg">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .back { color: #555; text-decoration: none; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+    .back:hover { color: #e63946; }
+    h1 { font-size: 1.6rem; font-weight: 800; }
+    h1 span { color: #e63946; }
+
+    .search-row { display: flex; gap: 0.6rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
+    .search-row input {
+      flex: 1; min-width: 160px;
+      background: #141414; border: 1px solid #222; border-radius: 8px;
+      color: #fff; padding: 0.65rem 1rem; font-size: 0.95rem;
+      font-family: inherit; outline: none; transition: border-color 0.2s;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .search-row input::placeholder { text-transform: none; letter-spacing: 0; }
+    .search-row input:focus { border-color: #e63946; }
+    .search-row button {
+      background: #e63946; color: #fff; border: none; border-radius: 8px;
+      padding: 0.65rem 1.4rem; font-weight: 700; font-size: 0.88rem;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+      font-family: inherit; transition: background 0.15s;
+    }
+    .search-row button:hover { background: #c72d38; }
+    .search-row button:disabled { background: #1e1e1e; color: #444; cursor: not-allowed; }
+
+    .hint {
+      font-size: 0.72rem; color: #444; letter-spacing: 0.06em;
+      margin-bottom: 1.5rem; line-height: 1.6;
+    }
+    .hint strong { color: #666; }
+
+    #status { font-size: 0.78rem; color: #555; letter-spacing: 0.08em; margin-bottom: 1rem; min-height: 1.2rem; }
+    #status.error { color: #e63946; }
+    #status.ok { color: #22c55e; }
+
+    #flight-info { display: none; margin-bottom: 1.5rem; }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.8rem;
+    }
+    .info-card {
+      background: #141414; border: 1px solid #222; border-radius: 10px;
+      padding: 1rem 1.2rem;
+    }
+    .info-label { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: #555; margin-bottom: 0.4rem; }
+    .info-value { font-size: 1.1rem; font-weight: 700; }
+    .info-sub { font-size: 0.72rem; color: #555; margin-top: 0.15rem; }
+
+    #map-wrap {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #222;
+      height: 460px;
+    }
+    #map { height: 100%; }
+
+    .leaflet-container { background: #111; }
+    .leaflet-tile-pane { filter: brightness(0.75) saturate(0.6); }
+    .leaflet-control-attribution { background: rgba(0,0,0,0.6) !important; color: #555 !important; }
+    .leaflet-control-attribution a { color: #555 !important; }
+
+    @media (max-width: 600px) {
+      #map-wrap { height: 320px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="/">← Nakatomi</a>
+  <h1>Flight<span>Tracker</span></h1>
+</header>
+
+<div class="search-row">
+  <input id="cs-input" type="text" placeholder="Flynummer: SK123, DY456, LH789..." autocomplete="off" spellcheck="false" maxlength="10" />
+  <button id="track-btn">Spor fly</button>
+</div>
+<div class="hint">
+  Skriv flynummeret slik det står på billetten din, f.eks. <strong>SK123</strong>, <strong>DY456</strong>, <strong>WF101</strong>. Oppdateres hvert 15. sek.
+</div>
+
+<div id="status"></div>
+
+<div id="flight-info">
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-label">Callsign</div>
+      <div class="info-value" id="i-cs">—</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Høyde</div>
+      <div class="info-value" id="i-alt">—</div>
+      <div class="info-sub">meter</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Hastighet</div>
+      <div class="info-value" id="i-spd">—</div>
+      <div class="info-sub">km/t</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Kurs</div>
+      <div class="info-value" id="i-hdg">—</div>
+      <div class="info-sub">grader</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Registrert i</div>
+      <div class="info-value" id="i-country" style="font-size:0.9rem">—</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Status</div>
+      <div class="info-value" id="i-ground" style="font-size:0.9rem">—</div>
+    </div>
+  </div>
+</div>
+
+<div id="map-wrap">
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+var map = L.map('map', { zoomControl: true }).setView([60, 15], 5);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 18
+}).addTo(map);
+
+var planeMarker = null;
+var trackLine = null;
+var trackPoints = [];
+var refreshTimer = null;
+var currentCs = null;
+
+function planeIcon(hdg) {
+  return L.divIcon({
+    html: '<svg width="34" height="34" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(' + (hdg || 0) + 'deg);transform-origin:50% 50%;display:block">' +
+      '<polygon points="17,2 21,19 17,16 13,19" fill="#e63946" stroke="#000" stroke-width="0.8" stroke-linejoin="round"/>' +
+      '<polygon points="5,21 17,16 29,21 26,23 17,19 8,23" fill="#e63946" stroke="#000" stroke-width="0.8" stroke-linejoin="round"/>' +
+      '<polygon points="13,29 17,26 21,29 19,32 17,30 15,32" fill="#e63946" stroke="#000" stroke-width="0.8" stroke-linejoin="round"/>' +
+      '</svg>',
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    className: ''
+  });
+}
+
+// IATA (2-letter) → ICAO (3-letter) airline code mapping
+var IATA_TO_ICAO = {
+  SK: 'SAS', DY: 'NAX', WF: 'WIF', D8: 'IBK',
+  LH: 'DLH', LX: 'SWR', OS: 'AUA', EW: 'EWG',
+  BA: 'BAW', VS: 'VIR', U2: 'EZY', FR: 'RYR', BE: 'BEE',
+  AF: 'AFR', KL: 'KLM', TO: 'FPO', HV: 'TRA', VY: 'VLG',
+  IB: 'IBE', TP: 'TAP', AZ: 'ITY', SN: 'BEL',
+  AY: 'FIN', BT: 'BTI', LO: 'LOT', OK: 'CSA',
+  TK: 'THY', EK: 'UAE', QR: 'QTR', EY: 'ETD',
+  AA: 'AAL', UA: 'UAL', DL: 'DAL', B6: 'JBU', WN: 'SWA',
+  AC: 'ACA', WS: 'WJA',
+  CX: 'CPA', SQ: 'SIA', JL: 'JAL', NH: 'ANA',
+  QF: 'QFA', NZ: 'ANZ',
+  DE: 'CFG', X3: 'TUI', OR: 'TFL'
+};
+
+function toIcaoCallsign(input) {
+  var m = input.match(/^([A-Z]{2,3})(\d+.*)$/);
+  if (!m) return input;
+  var prefix = m[1], num = m[2];
+  if (prefix.length === 2 && IATA_TO_ICAO[prefix]) {
+    return IATA_TO_ICAO[prefix] + num;
+  }
+  return input;
+}
+
+var input = document.getElementById('cs-input');
+var btn = document.getElementById('track-btn');
+var statusEl = document.getElementById('status');
+
+input.addEventListener('keydown', function(e) { if (e.key === 'Enter') startTracking(); });
+btn.addEventListener('click', startTracking);
+
+function startTracking() {
+  var raw = input.value.trim().toUpperCase();
+  if (!raw) return;
+  currentCs = toIcaoCallsign(raw);
+  trackPoints = [];
+  if (trackLine) { map.removeLayer(trackLine); trackLine = null; }
+  if (refreshTimer) clearInterval(refreshTimer);
+  fetchFlight();
+  refreshTimer = setInterval(fetchFlight, 15000);
+}
+
+function fetchFlight() {
+  statusEl.className = '';
+  statusEl.textContent = 'Henter flydata…';
+  btn.disabled = true;
+
+  var padded = (currentCs + '        ').slice(0, 8);
+  var url = 'https://opensky-network.org/api/states/all?callsign=' + encodeURIComponent(padded);
+
+  fetch(url)
+    .then(function(r) {
+      if (!r.ok) throw new Error('OpenSky svarte med ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      if (!data.states || data.states.length === 0) {
+        statusEl.className = 'error';
+        statusEl.textContent = 'Fant ikke "' + currentCs + '". Flyet er kanskje ikke i lufta, eller callsign er feil.';
+        return;
+      }
+      var s = data.states[0];
+      var lat = s[6], lon = s[5];
+      if (lat == null || lon == null) {
+        statusEl.className = 'error';
+        statusEl.textContent = 'Fly funnet, men ingen posisjonsdata ennå.';
+        return;
+      }
+      renderMap(s);
+      renderInfo(s);
+      statusEl.className = 'ok';
+      var tid = new Date().toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      statusEl.textContent = 'Sist oppdatert ' + tid + '  —  oppdateres automatisk hvert 15. sek';
+    })
+    .catch(function(err) {
+      statusEl.className = 'error';
+      statusEl.textContent = 'Feil: ' + err.message;
+    })
+    .finally(function() { btn.disabled = false; });
+}
+
+function renderMap(s) {
+  var lat = s[6], lon = s[5], hdg = s[10] || 0;
+
+  trackPoints.push([lat, lon]);
+  if (trackPoints.length > 120) trackPoints.shift();
+
+  if (trackLine) map.removeLayer(trackLine);
+  if (trackPoints.length > 1) {
+    trackLine = L.polyline(trackPoints, { color: '#e63946', weight: 2, opacity: 0.45 }).addTo(map);
+  }
+
+  if (planeMarker) {
+    planeMarker.setLatLng([lat, lon]);
+    planeMarker.setIcon(planeIcon(hdg));
+  } else {
+    planeMarker = L.marker([lat, lon], { icon: planeIcon(hdg) }).addTo(map);
+    map.setView([lat, lon], 7);
+  }
+}
+
+function renderInfo(s) {
+  var cs = (s[1] || '').trim();
+  var alt = s[13] != null ? Math.round(s[13]) : (s[7] != null ? Math.round(s[7]) : null);
+  var spd = s[9] != null ? Math.round(s[9] * 3.6) : null;
+  var hdg = s[10] != null ? Math.round(s[10]) : null;
+  var onGround = s[8];
+
+  document.getElementById('i-cs').textContent = cs || currentCs;
+  document.getElementById('i-alt').textContent = alt != null ? alt.toLocaleString('no-NO') : '—';
+  document.getElementById('i-spd').textContent = spd != null ? spd.toLocaleString('no-NO') : '—';
+  document.getElementById('i-hdg').textContent = hdg != null ? hdg + '°' : '—';
+  document.getElementById('i-country').textContent = s[2] || '—';
+
+  var gEl = document.getElementById('i-ground');
+  gEl.textContent = onGround ? 'På bakken' : 'I lufta';
+  gEl.style.color = onGround ? '#f59e0b' : '#22c55e';
+
+  document.getElementById('flight-info').style.display = 'block';
+}
+</script>
+</body>
+</html>
