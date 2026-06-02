@@ -73,7 +73,8 @@
       border-radius: 12px;
       overflow: hidden;
       border: 1px solid #222;
-      height: 460px;
+      height: calc(100vh - 300px);
+      min-height: 500px;
     }
     #map { height: 100%; }
 
@@ -83,7 +84,7 @@
     .leaflet-control-attribution a { color: #555 !important; }
 
     @media (max-width: 600px) {
-      #map-wrap { height: 320px; }
+      #map-wrap { height: calc(100vh - 280px); min-height: 340px; }
     }
   </style>
 </head>
@@ -149,8 +150,41 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 18
 }).addTo(map);
 
+// ICAO airport code → [lat, lon, IATA, city]
+var AIRPORTS = {
+  ENGM:[60.1939,11.1004,'OSL','Oslo'],ENBR:[60.2934,5.2181,'BGO','Bergen'],
+  ENZV:[58.8767,5.6378,'SVG','Stavanger'],ENVA:[63.4578,10.9258,'TRD','Trondheim'],
+  ENTC:[69.6833,18.9189,'TOS','Tromsø'],ENBO:[67.2692,14.3653,'BOO','Bodø'],
+  ENFL:[61.5836,5.0244,'FRO','Florø'],ENHD:[59.3453,5.2086,'HAU','Haugesund'],
+  ENKR:[70.0678,29.8913,'KKN','Kirkenes'],ENMS:[62.7283,7.2650,'MOL','Molde'],
+  EKCH:[55.6181,12.6561,'CPH','København'],ESSA:[59.6519,17.9186,'ARN','Stockholm'],
+  ESGG:[57.6628,12.2798,'GOT','Göteborg'],EFHK:[60.3172,24.9633,'HEL','Helsinki'],
+  EGLL:[51.4775,-0.4614,'LHR','London'],EGKK:[51.1481,-0.1903,'LGW','London Gatwick'],
+  EHAM:[52.3086,4.7639,'AMS','Amsterdam'],EDDF:[50.0333,8.5706,'FRA','Frankfurt'],
+  EDDM:[48.3538,11.7861,'MUC','München'],LFPG:[49.0097,2.5478,'CDG','Paris'],
+  LEMD:[40.4719,-3.5625,'MAD','Madrid'],LEBL:[41.2971,2.0785,'BCN','Barcelona'],
+  LIRF:[41.8003,12.2389,'FCO','Roma'],LIMC:[45.6306,8.7281,'MXP','Milano'],
+  LOWW:[48.1103,16.5697,'VIE','Wien'],LSZH:[47.4647,8.5492,'ZRH','Zürich'],
+  EBBR:[50.9014,4.4844,'BRU','Brussel'],LPPT:[38.7813,-9.1359,'LIS','Lisboa'],
+  LGAV:[37.9364,23.9445,'ATH','Athen'],EPWA:[52.1657,20.9671,'WAW','Warszawa'],
+  LKPR:[50.1008,14.26,'PRG','Praha'],LHBP:[47.4369,19.2556,'BUD','Budapest'],
+  LROP:[44.5711,26.085,'OTP','București'],UUEE:[55.9736,37.4125,'SVO','Moskva'],
+  OMDB:[25.2528,55.3644,'DXB','Dubai'],OBBI:[26.2708,50.6336,'BAH','Bahrain'],
+  OTBD:[25.2731,51.6081,'DOH','Doha'],OOMS:[23.5933,58.2844,'MCT','Muskat'],
+  WSSS:[1.3502,103.9944,'SIN','Singapore'],VHHH:[22.3089,113.9144,'HKG','Hongkong'],
+  RJAA:[35.7648,140.3864,'NRT','Tokyo'],ZBAA:[40.0799,116.6031,'PEK','Beijing'],
+  ZSPD:[31.1434,121.8052,'PVG','Shanghai'],YSSY:[-33.9461,151.1772,'SYD','Sydney'],
+  YMML:[-37.6733,144.8433,'MEL','Melbourne'],FAOR:[-26.1392,28.246,'JNB','Johannesburg'],
+  HECA:[30.1219,31.4056,'CAI','Kairo'],DNMM:[6.5774,3.3216,'LOS','Lagos'],
+  KJFK:[40.6398,-73.7789,'JFK','New York'],KLAX:[33.9425,-118.408,'LAX','Los Angeles'],
+  KORD:[41.9742,-87.9073,'ORD','Chicago'],KATL:[33.6367,-84.4281,'ATL','Atlanta'],
+  KDFW:[32.8998,-97.0403,'DFW','Dallas'],KMIA:[25.7959,-80.287,'MIA','Miami'],
+  CYYZ:[43.6772,-79.6306,'YYZ','Toronto'],CYVR:[49.1939,-123.1844,'YVR','Vancouver'],
+  SBGR:[-23.4356,-46.4731,'GRU','São Paulo']
+};
+
 var planeMarker = null;
-var trackLine = null;
+var routeLayers = [];
 var trackPoints = [];
 var refreshTimer = null;
 var currentCs = null;
@@ -202,12 +236,18 @@ var statusEl = document.getElementById('status');
 input.addEventListener('keydown', function(e) { if (e.key === 'Enter') startTracking(); });
 btn.addEventListener('click', startTracking);
 
+function clearLayers() {
+  routeLayers.forEach(function(l) { map.removeLayer(l); });
+  routeLayers = [];
+}
+
 function startTracking() {
   var raw = input.value.trim().toUpperCase();
   if (!raw) return;
   currentCs = toIcaoCallsign(raw);
   trackPoints = [];
-  if (trackLine) { map.removeLayer(trackLine); trackLine = null; }
+  clearLayers();
+  if (planeMarker) { map.removeLayer(planeMarker); planeMarker = null; }
   if (refreshTimer) clearInterval(refreshTimer);
   fetchFlight();
   refreshTimer = setInterval(fetchFlight, 15000);
@@ -252,18 +292,43 @@ function fetchFlight() {
 
 function renderMap(ac) {
   var lat = ac.lat, lon = ac.lon, hdg = ac.track || 0;
+  var origCode = ac.orig || ac.dep || ac.src || null;
+  var destCode = ac.dest || ac.dst || ac.arr || null;
 
   trackPoints.push([lat, lon]);
   if (trackPoints.length > 120) trackPoints.shift();
 
-  if (trackLine) { trackLine.forEach(function(l) { map.removeLayer(l); }); }
-  trackLine = [];
+  clearLayers();
+
+  // Rute fra avgangsflyplass
+  var origAp = origCode && AIRPORTS[origCode];
+  if (origAp) {
+    routeLayers.push(L.polyline([[origAp[0], origAp[1]], [lat, lon]], {
+      color: '#e63946', weight: 2, opacity: 0.35, dashArray: '6 5'
+    }).addTo(map));
+    routeLayers.push(L.circleMarker([origAp[0], origAp[1]], {
+      radius: 5, color: '#e63946', fillColor: '#0a0a0a', fillOpacity: 1, weight: 2
+    }).addTo(map).bindTooltip(origAp[2] + ' — ' + origAp[3], { permanent: false, direction: 'top' }));
+  }
+
+  // Rute til destinasjon
+  var destAp = destCode && AIRPORTS[destCode];
+  if (destAp) {
+    routeLayers.push(L.polyline([[lat, lon], [destAp[0], destAp[1]]], {
+      color: '#888', weight: 2, opacity: 0.25, dashArray: '4 6'
+    }).addTo(map));
+    routeLayers.push(L.circleMarker([destAp[0], destAp[1]], {
+      radius: 5, color: '#888', fillColor: '#0a0a0a', fillOpacity: 1, weight: 2
+    }).addTo(map).bindTooltip(destAp[2] + ' — ' + destAp[3], { permanent: false, direction: 'top' }));
+  }
+
+  // Sporingstråd (faktisk rute siden siden ble lastet)
   if (trackPoints.length > 1) {
-    trackLine.push(L.polyline(trackPoints, { color: '#e63946', weight: 3, opacity: 0.6 }).addTo(map));
+    routeLayers.push(L.polyline(trackPoints, { color: '#e63946', weight: 3, opacity: 0.7 }).addTo(map));
   }
   trackPoints.forEach(function(p, i) {
     if (i < trackPoints.length - 1) {
-      trackLine.push(L.circleMarker(p, { radius: 3, color: '#e63946', fillColor: '#e63946', fillOpacity: 0.5, weight: 0 }).addTo(map));
+      routeLayers.push(L.circleMarker(p, { radius: 3, color: '#e63946', fillColor: '#e63946', fillOpacity: 0.5, weight: 0 }).addTo(map));
     }
   });
 
@@ -272,8 +337,13 @@ function renderMap(ac) {
     planeMarker.setIcon(planeIcon(hdg));
   } else {
     planeMarker = L.marker([lat, lon], { icon: planeIcon(hdg) }).addTo(map);
-    map.setView([lat, lon], 7);
+    map.setView([lat, lon], 6);
   }
+}
+
+function apLabel(code) {
+  var ap = code && AIRPORTS[code];
+  return ap ? ap[2] : (code || '—');
 }
 
 function renderInfo(ac) {
@@ -283,8 +353,18 @@ function renderInfo(ac) {
   var spd = ac.gs != null ? Math.round(ac.gs * 1.852) : null;
   var hdg = ac.track != null ? Math.round(ac.track) : null;
   var onGround = ac.alt_baro === 'ground' || ac.on_ground === true;
+  var origCode = ac.orig || ac.dep || ac.src || null;
+  var destCode = ac.dest || ac.dst || ac.arr || null;
 
-  document.getElementById('i-cs').textContent = cs || currentCs;
+  var csEl = document.getElementById('i-cs');
+  if (origCode || destCode) {
+    csEl.textContent = apLabel(origCode) + ' → ' + apLabel(destCode);
+    csEl.style.fontSize = '0.9rem';
+  } else {
+    csEl.textContent = cs || currentCs;
+    csEl.style.fontSize = '';
+  }
+
   document.getElementById('i-alt').textContent = alt != null ? alt.toLocaleString('no-NO') : '—';
   document.getElementById('i-spd').textContent = spd != null ? spd.toLocaleString('no-NO') : '—';
   document.getElementById('i-hdg').textContent = hdg != null ? hdg + '°' : '—';
