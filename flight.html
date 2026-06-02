@@ -217,7 +217,7 @@ function fetchFlight() {
   statusEl.textContent = 'Henter flydata…';
   btn.disabled = true;
 
-  var url = 'https://api.adsb.fi/v1/callsign/' + encodeURIComponent(currentCs);
+  var url = '/api/flight?callsign=' + encodeURIComponent(currentCs);
 
   fetch(url)
     .then(function(r) {
